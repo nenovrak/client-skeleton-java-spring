@@ -44,7 +44,7 @@ public class ConsumerMain implements ApplicationRunner {
     	final Builder orchestrationFormBuilder = arrowheadService.getOrchestrationFormBuilder();
     	
     	final ServiceQueryFormDTO requestedService = new ServiceQueryFormDTO();
-    	requestedService.setServiceDefinitionRequirement("test-service");
+    	requestedService.setServiceDefinitionRequirement("opc-ua_read_variable");
     	
     	orchestrationFormBuilder.requestedService(requestedService)
     							.flag(Flag.MATCHMAKING, false) //When this flag is false or not specified, then the orchestration response cloud contain more proper provider. Otherwise only one will be chosen if there is any proper.
@@ -64,10 +64,13 @@ public class ConsumerMain implements ApplicationRunner {
     	
     	if (response == null || response.getResponse().isEmpty()) {
     		//If no proper providers found during the orchestration process, then the response list will be empty. Handle the case as you wish!
+			System.out.println("FATAL ERROR: Orchestration response came back empty. Make sure the Service you try to consume is in the Service Registry and that the Consumer has the privileges to consume this Service (i.e. check intra_cloud_authorization).");
+			System.exit(1);
     	}
     	
     	final OrchestrationResultDTO result = response.getResponse().get(0); //Simplest way of choosing a provider.
-    	
+
+		// Read OPC-UA Variable
     	final HttpMethod httpMethod = HttpMethod.GET;//Http method should be specified in the description of the service.
     	final String address = result.getProvider().getAddress();
     	final int port = result.getProvider().getPort();
@@ -78,7 +81,16 @@ public class ConsumerMain implements ApplicationRunner {
     		token = result.getAuthorizationTokens().get(interfaceName); //Can be null when the security type of the provider is 'CERTIFICATE' or nothing.
 		}
     	final Object payload = null; //Can be null if not specified in the description of the service.
-    	
-    	final String consumedService = arrowheadService.consumeServiceHTTP(String.class, httpMethod, address, port, serviceUri, interfaceName, token, payload, "testkey", "testvalue");
+
+		String opcuaServerAddress = "123456";
+		String opcuaNamespace = "5";
+		String opcuaNodeId = "23";
+		System.out.println("GET " + address + "/" + serviceUri);
+    	//final String consumedService = arrowheadService.consumeServiceHTTP(String.class, httpMethod, address, port, serviceUri, interfaceName, token, payload, "opcuaServerAddress", opcuaServerAddress, "opcuaNamespace", opcuaNamespace, "opcuaNodeId", opcuaNodeId);
+		final String consumedService = arrowheadService.consumeServiceHTTP(String.class, httpMethod, address, port, CommonConstants.ECHO_URI, interfaceName, token, payload, "opcuaServerAddress", opcuaServerAddress, "opcuaNamespace", opcuaNamespace, "opcuaNodeId", opcuaNodeId);
+		System.out.println("Service response: " + consumedService);
 	}
+
+	//public void readOPCUAVariable(OrchestrationFormRequestDTO result) {
+	//}
 }

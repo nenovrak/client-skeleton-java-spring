@@ -7,12 +7,20 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.CertificateException;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
 
+import eu.arrowhead.common.CommonConstants;
+import eu.arrowhead.common.dto.shared.ServiceRegistryRequestDTO;
+import eu.arrowhead.common.dto.shared.ServiceSecurityType;
+import eu.arrowhead.common.dto.shared.SystemRequestDTO;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
 import eu.arrowhead.client.library.ArrowheadService;
@@ -38,6 +46,18 @@ public class ProviderApplicationInitListener extends ApplicationInitListener {
 	@Value(ClientCommonConstants.$TOKEN_SECURITY_FILTER_ENABLED_WD)
 	private boolean tokenSecurityFilterEnabled;
 	
+	@Value(CommonConstants.$SERVER_SSL_ENABLED_WD)
+	private boolean sslEnabled;
+
+	@Value(ClientCommonConstants.$CLIENT_SYSTEM_NAME)
+	private String mySystemName;
+
+	@Value(ClientCommonConstants.$CLIENT_SERVER_ADDRESS_WD)
+	private String mySystemAddress;
+
+	@Value(ClientCommonConstants.$CLIENT_SERVER_PORT_WD)
+	private int mySystemPort;
+
 	private final Logger logger = LogManager.getLogger(ProviderApplicationInitListener.class);
 	
 	//=================================================================================================
@@ -59,6 +79,12 @@ public class ProviderApplicationInitListener extends ApplicationInitListener {
 		setTokenSecurityFilter();
 		
 		//TODO: implement here any custom behavior on application start up
+		//Register services into ServiceRegistry
+
+		// OPC-UA Variable read
+		ServiceRegistryRequestDTO getCarServiceRequest = createServiceRegistryRequest("OPC-UA_read_variable",  "opcua/read/variable", HttpMethod.GET);
+		//getCarServiceRequest.getMetadata().put(CarProviderConstants.REQUEST_PARAM_KEY_BRAND, CarProviderConstants.REQUEST_PARAM_BRAND);
+		arrowheadService.forceRegisterServiceToServiceRegistry(getCarServiceRequest);
 	}
 	
 	//-------------------------------------------------------------------------------------------------
@@ -71,6 +97,37 @@ public class ProviderApplicationInitListener extends ApplicationInitListener {
 	// assistant methods
 
 	//-------------------------------------------------------------------------------------------------
+
+	//-------------------------------------------------------------------------------------------------
+	private ServiceRegistryRequestDTO createServiceRegistryRequest(final String serviceDefinition, final String serviceUri, final HttpMethod httpMethod) {
+		final ServiceRegistryRequestDTO serviceRegistryRequest = new ServiceRegistryRequestDTO();
+		serviceRegistryRequest.setServiceDefinition(serviceDefinition);
+		final SystemRequestDTO systemRequest = new SystemRequestDTO();
+		systemRequest.setSystemName(mySystemName);
+		systemRequest.setAddress(mySystemAddress);
+		systemRequest.setPort(mySystemPort);
+
+		if (tokenSecurityFilterEnabled) {
+			systemRequest.setAuthenticationInfo(Base64.getEncoder().encodeToString(arrowheadService.getMyPublicKey().getEncoded()));
+			serviceRegistryRequest.setSecure(ServiceSecurityType.TOKEN);
+			serviceRegistryRequest.setInterfaces(List.of("HTTPS-SECURE-JSON"));
+		} else if (sslEnabled) {
+			systemRequest.setAuthenticationInfo(Base64.getEncoder().encodeToString(arrowheadService.getMyPublicKey().getEncoded()));
+			serviceRegistryRequest.setSecure(ServiceSecurityType.CERTIFICATE);
+			serviceRegistryRequest.setInterfaces(List.of("HTTPS-SECURE-JSON"));
+		} else {
+			serviceRegistryRequest.setSecure(ServiceSecurityType.NOT_SECURE);
+			serviceRegistryRequest.setInterfaces(List.of("HTTP-INSECURE-JSON"));
+		}
+		serviceRegistryRequest.setProviderSystem(systemRequest);
+		serviceRegistryRequest.setServiceUri(serviceUri);
+		serviceRegistryRequest.setMetadata(new HashMap<>());
+		serviceRegistryRequest.getMetadata().put("http-method", httpMethod.name());
+		return serviceRegistryRequest;
+	}
+
+
+
 	private void setTokenSecurityFilter() {
 		if(!tokenSecurityFilterEnabled) {
 			logger.info("TokenSecurityFilter in not active");
