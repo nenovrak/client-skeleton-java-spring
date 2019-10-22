@@ -86,8 +86,8 @@ public class ConsumerMain implements ApplicationRunner {
 		String opcuaNamespace = "5";
 		String opcuaNodeId = "23";
 		System.out.println("GET " + address + "/" + serviceUri);
-    	//final String consumedService = arrowheadService.consumeServiceHTTP(String.class, httpMethod, address, port, serviceUri, interfaceName, token, payload, "opcuaServerAddress", opcuaServerAddress, "opcuaNamespace", opcuaNamespace, "opcuaNodeId", opcuaNodeId);
-		final String consumedService = arrowheadService.consumeServiceHTTP(String.class, httpMethod, address, port, CommonConstants.ECHO_URI, interfaceName, token, payload, "opcuaServerAddress", opcuaServerAddress, "opcuaNamespace", opcuaNamespace, "opcuaNodeId", opcuaNodeId);
+    	final String consumedService = arrowheadService.consumeServiceHTTP(String.class, httpMethod, address, port, serviceUri, interfaceName, token, payload, "opcuaServerAddress", opcuaServerAddress, "opcuaNamespace", opcuaNamespace, "opcuaNodeId", opcuaNodeId);
+		//final String consumedService = arrowheadService.consumeServiceHTTP(String.class, httpMethod, address, port, CommonConstants.ECHO_URI, interfaceName, token, payload, "opcuaServerAddress", opcuaServerAddress);
 		System.out.println("Service response: " + consumedService);
 	}
 

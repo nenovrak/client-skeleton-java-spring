@@ -82,7 +82,7 @@ public class ProviderApplicationInitListener extends ApplicationInitListener {
 		//Register services into ServiceRegistry
 
 		// OPC-UA Variable read
-		ServiceRegistryRequestDTO getCarServiceRequest = createServiceRegistryRequest("OPC-UA_read_variable",  "opcua/read/variable", HttpMethod.GET);
+		ServiceRegistryRequestDTO getCarServiceRequest = createServiceRegistryRequest("OPC-UA_read_variable",  "/opcua/read/variable", HttpMethod.GET);
 		//getCarServiceRequest.getMetadata().put(CarProviderConstants.REQUEST_PARAM_KEY_BRAND, CarProviderConstants.REQUEST_PARAM_BRAND);
 		arrowheadService.forceRegisterServiceToServiceRegistry(getCarServiceRequest);
 	}

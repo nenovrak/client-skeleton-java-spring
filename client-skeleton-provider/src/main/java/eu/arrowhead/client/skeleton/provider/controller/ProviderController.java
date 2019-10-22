@@ -1,10 +1,7 @@
 package eu.arrowhead.client.skeleton.provider.controller;
 
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import eu.arrowhead.common.CommonConstants;
 
@@ -39,7 +36,8 @@ public class ProviderController {
 	// methods
 
 	//-------------------------------------------------------------------------------------------------
-	@GetMapping(path = CommonConstants.ECHO_URI)
+	@RequestMapping(path = "/echo")
+	@ResponseBody
 	public String echoService() {
 		return "Got it!";
 	}
@@ -48,10 +46,16 @@ public class ProviderController {
 	//TODO: implement here your provider related REST end points
 
 	//-------------------------------------------------------------------------------------------------
-	@GetMapping(path = "/opcua/read/variable/{opcuaServerAddress}/{opcuaNamespace}/{opcuaNodeId}")
+	@RequestMapping(path = "/opcua/read/variable")
 	@ResponseBody
-	public String readVariableNode(@PathVariable(name = "opcuaServerAddress") final String opcuaServerAddress, @PathVariable(name = "opcuaNamespace") final String opcuaNamespace, @PathVariable(name = "opcuaNodeId") final String opcuaNodeId) {
+	public String readVariableNode(@RequestParam(name = "opcuaServerAddress") final String opcuaServerAddress, @RequestParam(name = "opcuaNamespace") final String opcuaNamespace, @RequestParam(name = "opcuaNodeId") final String opcuaNodeId) {
 		System.out.println("Got a read variable request:" + opcuaServerAddress + "/" + opcuaNamespace + "/" + opcuaNodeId);
 		return "{result:japp}";
+	}
+
+	@RequestMapping("*")
+	@ResponseBody
+	public String fallbackMethod(){
+		return "fallback method";
 	}
 }
