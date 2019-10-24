@@ -1,32 +1,10 @@
 package eu.arrowhead.client.skeleton.provider.controller;
-
-import org.springframework.http.MediaType;
+import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
 import org.springframework.web.bind.annotation.*;
-
-import eu.arrowhead.common.CommonConstants;
+import eu.arrowhead.client.skeleton.provider.OPC_UA.*;
 
 @RestController
 public class ProviderController {
-
-
-
-
-/*
-	NodeId nodeId = new NodeId(namespaceIndex, identifier);
-
-	OPCUAConnection connection = new OPCUAConnection(address);
-        try {
-		OPCUAInteractions.readVariableNode(connection.getConnectedClient(), nodeId);
-		connection.dispose();
-		return Response.status(200).entity("CONTENT GOES HERE...").build();
-	} catch (Exception ex) {
-		Logger.getLogger(RESTHandler.class.getName()).log(Level.SEVERE, null, ex);
-		connection.dispose();
-		return Response.status(500).build();
-	}
-*/
-
-
 	//=================================================================================================
 	// members
 
@@ -48,9 +26,21 @@ public class ProviderController {
 	//-------------------------------------------------------------------------------------------------
 	@RequestMapping(path = "/opcua/read/variable")
 	@ResponseBody
-	public String readVariableNode(@RequestParam(name = "opcuaServerAddress") final String opcuaServerAddress, @RequestParam(name = "opcuaNamespace") final String opcuaNamespace, @RequestParam(name = "opcuaNodeId") final String opcuaNodeId) {
-		System.out.println("Got a read variable request:" + opcuaServerAddress + "/" + opcuaNamespace + "/" + opcuaNodeId);
-		return "{result:japp}";
+	public String readVariableNode(@RequestParam(name = "opcuaServerAddress") final String opcuaServerAddress, @RequestParam(name = "opcuaNamespace") final int namespaceIndex, @RequestParam(name = "opcuaNodeId") final String identifier) {
+		System.out.println("Got a read variable request:" + opcuaServerAddress + "/" + namespaceIndex + "/" + identifier);
+		//NodeId nodeId = new NodeId(Integer.parseInt(namespaceIndex), Integer.parseInt(identifier));
+		NodeId nodeId = new NodeId(namespaceIndex, identifier);
+
+		OPCUAConnection connection = new OPCUAConnection(opcuaServerAddress);
+		String body = "";
+		try {
+			body = OPCUAInteractions.readVariableNode(connection.getConnectedClient(), nodeId);
+			connection.dispose();
+			return body;
+		} catch (Exception ex) {
+			connection.dispose();
+			return "There was an error reading the OPC-UA node.";
+		}
 	}
 
 	@RequestMapping("*")

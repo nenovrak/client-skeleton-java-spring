@@ -82,9 +82,11 @@ public class ConsumerMain implements ApplicationRunner {
 		}
     	final Object payload = null; //Can be null if not specified in the description of the service.
 
-		String opcuaServerAddress = "123456";
+		// TODO The settings below should be read from a file!
+		// FIXME opc.tcp:// must be omitted because it is added by Milo? Check if this is part of the serverAddress and if so, remove it.
+		String opcuaServerAddress = "A9824.neteq.ltu.se:53530/OPCUA/SimulationServer";
 		String opcuaNamespace = "5";
-		String opcuaNodeId = "23";
+		String opcuaNodeId = "Counter1";
 		System.out.println("GET " + address + "/" + serviceUri);
     	final String consumedService = arrowheadService.consumeServiceHTTP(String.class, httpMethod, address, port, serviceUri, interfaceName, token, payload, "opcuaServerAddress", opcuaServerAddress, "opcuaNamespace", opcuaNamespace, "opcuaNodeId", opcuaNodeId);
 		//final String consumedService = arrowheadService.consumeServiceHTTP(String.class, httpMethod, address, port, CommonConstants.ECHO_URI, interfaceName, token, payload, "opcuaServerAddress", opcuaServerAddress);
