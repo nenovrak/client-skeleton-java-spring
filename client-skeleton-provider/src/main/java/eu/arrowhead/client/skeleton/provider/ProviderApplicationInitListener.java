@@ -61,6 +61,9 @@ public class ProviderApplicationInitListener extends ApplicationInitListener {
 	@Value(ClientCommonConstants.$CLIENT_SERVER_PORT_WD)
 	private int mySystemPort;
 
+	@Value("${opc.ua.connection_address}")
+	private String opcuaServerAddress;
+
 	private final Logger logger = LogManager.getLogger(ProviderApplicationInitListener.class);
 	
 	//=================================================================================================
@@ -77,8 +80,8 @@ public class ProviderApplicationInitListener extends ApplicationInitListener {
 
 			//Initialize Arrowhead Context
 			arrowheadService.updateCoreServiceURIs(CoreSystem.AUTHORIZATION);			
-		}		
-		
+		}
+
 		setTokenSecurityFilter();
 		
 		//TODO: implement here any custom behavior on application start up
@@ -87,15 +90,28 @@ public class ProviderApplicationInitListener extends ApplicationInitListener {
 		// OPC-UA Variable read
 		// FIXME This should be read from a file...
 
-		// FIXME These things should be read from the config file ALSO NOTE!! The opcServerAddress should NOT include opc.tcp://
-		String opcServerAddress = "A9824.neteq.ltu.se:53530/OPCUA/SimulationServer";
+		// FIXME The opcServerAddress should NOT include opc.tcp:// since Eclipse Milo will add these
+		opcuaServerAddress = opcuaServerAddress.replaceAll("opc.tcp://", "");
+
+		// Variable list:
+		// #rootNodeId, read (Adds read services to SR for all variables including and below this node)
+		// #rootNodeId, write (Adds write services to SR for all variables including and below this node)
+
+		//String opcServerAddress = "A9824.neteq.ltu.se:53530/OPCUA/SimulationServer";
+		//int rootNodeNamespaceIndex = 5;
+		//String rootNodeIdentifier = "85/0:Simulation";
+		//String readVariableUri = "/opcua/read/variable/";
+
+		System.out.println("SERVER_ADDRESS:" + opcuaServerAddress);
+
 		int rootNodeNamespaceIndex = 5;
 		String rootNodeIdentifier = "85/0:Simulation";
 		String readVariableUri = "/opcua/read/variable/";
 
+
 		try {
 			NodeId nodeId = new NodeId(rootNodeNamespaceIndex, rootNodeIdentifier);
-			OPCUAConnection connection = new OPCUAConnection(opcServerAddress);
+			OPCUAConnection connection = new OPCUAConnection(opcuaServerAddress);
 			Vector<String> nodesBeneath = OPCUAInteractions.browseNode(connection.getConnectedClient(), nodeId);
 			connection.dispose();
 
@@ -108,7 +124,7 @@ public class ProviderApplicationInitListener extends ApplicationInitListener {
 				//ServiceRegistryRequestDTO serviceRequest = createServiceRegistryRequest("" + identifier,  "/opcua/read/variable?opcuaServerAddress=" + opcServerAddress + "&opcuaNamespace=" + rootNodeNamespaceIndex + "&opcuaNodeId=" + identifier , HttpMethod.GET);
 				ServiceRegistryRequestDTO serviceRequest = createServiceRegistryRequest("" + identifier,  "/opcua/read/variable", HttpMethod.GET);
 				serviceRequest.getMetadata().put("nodeId", identifier);
-				serviceRequest.getMetadata().put("serverAddress", opcServerAddress);
+				serviceRequest.getMetadata().put("serverAddress", opcuaServerAddress);
 				serviceRequest.getMetadata().put("namespace", "" + rootNodeNamespaceIndex);
 
 				arrowheadService.forceRegisterServiceToServiceRegistry(serviceRequest);
