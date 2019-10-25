@@ -22,7 +22,7 @@ public class ProviderController {
 	
 	//-------------------------------------------------------------------------------------------------
 	//TODO: implement here your provider related REST end points
-
+	// FIXME Double-check that the token security prevents tampering with variables in the OPC-UA it is not supposed to access (I.e. only allows access to the variables in the Service Registry)
 	//-------------------------------------------------------------------------------------------------
 	@RequestMapping(path = "/opcua/read/variable")
 	@ResponseBody

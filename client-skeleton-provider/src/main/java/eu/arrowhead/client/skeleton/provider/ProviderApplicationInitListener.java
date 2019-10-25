@@ -10,6 +10,7 @@ import java.security.cert.CertificateException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Vector;
 
 import eu.arrowhead.common.CommonConstants;
 import eu.arrowhead.common.dto.shared.ServiceRegistryRequestDTO;
@@ -30,6 +31,8 @@ import eu.arrowhead.client.skeleton.provider.security.ProviderSecurityConfig;
 import eu.arrowhead.common.Utilities;
 import eu.arrowhead.common.core.CoreSystem;
 import eu.arrowhead.common.exception.ArrowheadException;
+import eu.arrowhead.client.skeleton.provider.OPC_UA.*;
+import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
 
 @Component
 public class ProviderApplicationInitListener extends ApplicationInitListener {
@@ -82,9 +85,42 @@ public class ProviderApplicationInitListener extends ApplicationInitListener {
 		//Register services into ServiceRegistry
 
 		// OPC-UA Variable read
-		ServiceRegistryRequestDTO getCarServiceRequest = createServiceRegistryRequest("OPC-UA_read_variable",  "/opcua/read/variable", HttpMethod.GET);
+		// FIXME This should be read from a file...
+
+		// FIXME These things should be read from the config file ALSO NOTE!! The opcServerAddress should NOT include opc.tcp://
+		String opcServerAddress = "A9824.neteq.ltu.se:53530/OPCUA/SimulationServer";
+		int rootNodeNamespaceIndex = 5;
+		String rootNodeIdentifier = "85/0:Simulation";
+		String readVariableUri = "/opcua/read/variable/";
+
+		try {
+			NodeId nodeId = new NodeId(rootNodeNamespaceIndex, rootNodeIdentifier);
+			OPCUAConnection connection = new OPCUAConnection(opcServerAddress);
+			Vector<String> nodesBeneath = OPCUAInteractions.browseNode(connection.getConnectedClient(), nodeId);
+			connection.dispose();
+
+			for(String nodeString:nodesBeneath) {
+				// FIXME Maybe create a custom object for this? This is somewhat hacked together now since I don't really know if this is even the proper way to register/orchestrate the OPC-UA variables...
+				String parts[] = nodeString.split(",");
+				String identifierPart[] = parts[1].split("=");
+				String identifier = identifierPart[1];
+
+				//ServiceRegistryRequestDTO serviceRequest = createServiceRegistryRequest("" + identifier,  "/opcua/read/variable?opcuaServerAddress=" + opcServerAddress + "&opcuaNamespace=" + rootNodeNamespaceIndex + "&opcuaNodeId=" + identifier , HttpMethod.GET);
+				ServiceRegistryRequestDTO serviceRequest = createServiceRegistryRequest("" + identifier,  "/opcua/read/variable", HttpMethod.GET);
+				serviceRequest.getMetadata().put("nodeId", identifier);
+				serviceRequest.getMetadata().put("serverAddress", opcServerAddress);
+				serviceRequest.getMetadata().put("namespace", "" + rootNodeNamespaceIndex);
+
+				arrowheadService.forceRegisterServiceToServiceRegistry(serviceRequest);
+				System.out.println("Registered service for variable " + nodeString + ".");
+			}
+		} catch (Exception e) {
+			System.out.println("ERROR: Could not register to ServiceRegistry.");
+		}
+
+		//ServiceRegistryRequestDTO getCarServiceRequest = createServiceRegistryRequest("OPC-UA_read_variable",  "/opcua/read/variable", HttpMethod.GET);
 		//getCarServiceRequest.getMetadata().put(CarProviderConstants.REQUEST_PARAM_KEY_BRAND, CarProviderConstants.REQUEST_PARAM_BRAND);
-		arrowheadService.forceRegisterServiceToServiceRegistry(getCarServiceRequest);
+		//arrowheadService.forceRegisterServiceToServiceRegistry(getCarServiceRequest);
 	}
 	
 	//-------------------------------------------------------------------------------------------------

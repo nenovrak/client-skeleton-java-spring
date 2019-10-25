@@ -18,6 +18,8 @@ import eu.arrowhead.common.dto.shared.OrchestrationResultDTO;
 import eu.arrowhead.common.dto.shared.ServiceQueryFormDTO;
 import eu.arrowhead.common.exception.ArrowheadException;
 
+import java.util.Map;
+
 @SpringBootApplication
 @ComponentScan(basePackages = {CommonConstants.BASE_PACKAGE}) //TODO: add custom packages if any
 public class ConsumerMain implements ApplicationRunner {
@@ -44,7 +46,7 @@ public class ConsumerMain implements ApplicationRunner {
     	final Builder orchestrationFormBuilder = arrowheadService.getOrchestrationFormBuilder();
     	
     	final ServiceQueryFormDTO requestedService = new ServiceQueryFormDTO();
-    	requestedService.setServiceDefinitionRequirement("opc-ua_read_variable");
+    	requestedService.setServiceDefinitionRequirement("square1");
     	
     	orchestrationFormBuilder.requestedService(requestedService)
     							.flag(Flag.MATCHMAKING, false) //When this flag is false or not specified, then the orchestration response cloud contain more proper provider. Otherwise only one will be chosen if there is any proper.
@@ -69,6 +71,7 @@ public class ConsumerMain implements ApplicationRunner {
     	}
     	
     	final OrchestrationResultDTO result = response.getResponse().get(0); //Simplest way of choosing a provider.
+		Map<String, String> meta = result.getMetadata();
 
 		// Read OPC-UA Variable
     	final HttpMethod httpMethod = HttpMethod.GET;//Http method should be specified in the description of the service.
@@ -82,17 +85,8 @@ public class ConsumerMain implements ApplicationRunner {
 		}
     	final Object payload = null; //Can be null if not specified in the description of the service.
 
-		// TODO The settings below should be read from a file!
-		// FIXME opc.tcp:// must be omitted because it is added by Milo? Check if this is part of the serverAddress and if so, remove it.
-		String opcuaServerAddress = "A9824.neteq.ltu.se:53530/OPCUA/SimulationServer";
-		String opcuaNamespace = "5";
-		String opcuaNodeId = "Counter1";
 		System.out.println("GET " + address + "/" + serviceUri);
-    	final String consumedService = arrowheadService.consumeServiceHTTP(String.class, httpMethod, address, port, serviceUri, interfaceName, token, payload, "opcuaServerAddress", opcuaServerAddress, "opcuaNamespace", opcuaNamespace, "opcuaNodeId", opcuaNodeId);
-		//final String consumedService = arrowheadService.consumeServiceHTTP(String.class, httpMethod, address, port, CommonConstants.ECHO_URI, interfaceName, token, payload, "opcuaServerAddress", opcuaServerAddress);
+		final String consumedService = arrowheadService.consumeServiceHTTP(String.class, httpMethod, address, port, serviceUri, interfaceName, token, payload, "opcuaServerAddress", meta.get("serverAddress"), "opcuaNamespace", meta.get("namespace"), "opcuaNodeId", meta.get("nodeId"));
 		System.out.println("Service response: " + consumedService);
 	}
-
-	//public void readOPCUAVariable(OrchestrationFormRequestDTO result) {
-	//}
 }
