@@ -63,13 +63,20 @@ public class OPCUAInteractions {
         return returnString;
     }
 
-    public static String writeNode(OpcUaClient client, NodeId nodeId, int value) {
+    public static String writeNode(OpcUaClient client, NodeId nodeId, String value, String type) {
+        Object val = new Object();
+        if(type == "int") {
+            val = Integer.valueOf(value);
+        } else if(type == "double") {
+            val = Double.valueOf(value);
+        }
+
         String returnString = "";
         returnString += value;
         try {
             VariableNode node = client.getAddressSpace().createVariableNode(nodeId);
-            Variant v = new Variant(value);
-            DataValue data = new DataValue(v,null, null);
+            Variant v = new Variant(val);
+            DataValue data = new DataValue(v,StatusCode.GOOD, null);
             CompletableFuture<StatusCode> f = client.writeValue(nodeId, data);
             StatusCode status = f.get();
             System.out.println("Wrote DataValue: " + data + " status: " + status);

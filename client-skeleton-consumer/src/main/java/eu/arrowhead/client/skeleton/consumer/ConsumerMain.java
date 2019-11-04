@@ -23,70 +23,94 @@ import java.util.Map;
 @SpringBootApplication
 @ComponentScan(basePackages = {CommonConstants.BASE_PACKAGE}) //TODO: add custom packages if any
 public class ConsumerMain implements ApplicationRunner {
-    
-    //=================================================================================================
+
+	//=================================================================================================
 	// members
-	
-    @Autowired
+
+	@Autowired
 	private ArrowheadService arrowheadService;
-    
-    //=================================================================================================
+
+	//=================================================================================================
 	// methods
 
 	//------------------------------------------------------------------------------------------------
-    public static void main( final String[] args ) {
-    	SpringApplication.run(ConsumerMain.class, args);
-    }
+	public static void main(final String[] args) {
+		SpringApplication.run(ConsumerMain.class, args);
+	}
 
-    //-------------------------------------------------------------------------------------------------
-    @Override
+	//-------------------------------------------------------------------------------------------------
+	@Override
 	public void run(final ApplicationArguments args) throws Exception {
 		//SIMPLE EXAMPLE OF INITIATING AN ORCHESTRATION
-    	
-    	final Builder orchestrationFormBuilder = arrowheadService.getOrchestrationFormBuilder();
-    	
-    	final ServiceQueryFormDTO requestedService = new ServiceQueryFormDTO();
-    	requestedService.setServiceDefinitionRequirement("read_square1");
-    	
-    	orchestrationFormBuilder.requestedService(requestedService)
-    							.flag(Flag.MATCHMAKING, false) //When this flag is false or not specified, then the orchestration response cloud contain more proper provider. Otherwise only one will be chosen if there is any proper.
-    							.flag(Flag.OVERRIDE_STORE, true) //When this flag is false or not specified, then a Store Orchestration will be proceeded. Otherwise a Dynamic Orchestration will be proceeded.
-    							.flag(Flag.TRIGGER_INTER_CLOUD, false); //When this flag is false or not specified, then orchestration will not look for providers in the neighbor clouds, when there is no proper provider in the local cloud. Otherwise it will. 
-    	
-    	final OrchestrationFormRequestDTO orchestrationRequest = orchestrationFormBuilder.build();
-    	
-    	OrchestrationResponseDTO response = null;
-    	try {
-    		response = arrowheadService.proceedOrchestration(orchestrationRequest);			
-		} catch (final ArrowheadException ex) {
-			//Handle the unsuccessful request as you wish!
-		}
-    	
-    	//EXAMPLE OF CONSUMING THE SERVICE FROM A CHOSEN PROVIDER
-    	
-    	if (response == null || response.getResponse().isEmpty()) {
-    		//If no proper providers found during the orchestration process, then the response list will be empty. Handle the case as you wish!
-			System.out.println("FATAL ERROR: Orchestration response came back empty. Make sure the Service you try to consume is in the Service Registry and that the Consumer has the privileges to consume this Service (e.g. check intra_cloud_authorization and intra_cloud_interface_connection).");
-			System.exit(1);
-    	}
-    	
-    	final OrchestrationResultDTO result = response.getResponse().get(0); //Simplest way of choosing a provider.
+
+		// --------------------- Read OPC-UA Variable ---------------------------
+		OrchestrationResultDTO result = orchestrate("read_square1");
 		Map<String, String> meta = result.getMetadata();
 
-		// Read OPC-UA Variable
-    	final HttpMethod httpMethod = HttpMethod.GET;//Http method should be specified in the description of the service.
-    	final String address = result.getProvider().getAddress();
-    	final int port = result.getProvider().getPort();
-    	final String serviceUri = result.getServiceUri();
-    	final String interfaceName = result.getInterfaces().get(0).getInterfaceName(); //Simplest way of choosing an interface.
-    	String token = null;
-    	if (result.getAuthorizationTokens() != null) {
-    		token = result.getAuthorizationTokens().get(interfaceName); //Can be null when the security type of the provider is 'CERTIFICATE' or nothing.
+		final HttpMethod httpMethod = HttpMethod.GET;//Http method should be specified in the description of the service.
+		final String address = result.getProvider().getAddress();
+		final int port = result.getProvider().getPort();
+		final String serviceUri = result.getServiceUri();
+		final String interfaceName = result.getInterfaces().get(0).getInterfaceName(); //Simplest way of choosing an interface.
+		String token = null;
+		if (result.getAuthorizationTokens() != null) {
+			token = result.getAuthorizationTokens().get(interfaceName); //Can be null when the security type of the provider is 'CERTIFICATE' or nothing.
 		}
-    	final Object payload = null; //Can be null if not specified in the description of the service.
+		final Object payload = null; //Can be null if not specified in the description of the service.
 
 		System.out.println("GET " + address + "/" + serviceUri);
-		final String consumedService = arrowheadService.consumeServiceHTTP(String.class, httpMethod, address, port, serviceUri, interfaceName, token, payload, "opcuaServerAddress", meta.get("serverAddress"), "opcuaNamespace", meta.get("namespace"), "opcuaNodeId", meta.get("nodeId"));
-		System.out.println("Service response: " + consumedService);
+		final String consumedReadService = arrowheadService.consumeServiceHTTP(String.class, httpMethod, address, port, serviceUri, interfaceName, token, payload, "opcuaServerAddress", meta.get("serverAddress"), "opcuaNamespace", meta.get("namespace"), "opcuaNodeId", meta.get("nodeId"));
+		System.out.println("Service response: " + consumedReadService);
+
+
+		// --------------------- Write OPC-UA Variable ---------------------------
+		result = orchestrate("write_square1");
+		Map<String, String> meta2 = result.getMetadata();
+		// FIXME Why are the variables above and here declared final? Thread safety? Performance? I've kept them final here but it is a bit silly to rename them in this way. It is, however, better than breaking things.
+		final HttpMethod httpMethod2 = HttpMethod.POST;
+		final String address2 = result.getProvider().getAddress();
+		final int port2 = result.getProvider().getPort();
+		final String serviceUri2 = result.getServiceUri();
+		final String interfaceName2 = result.getInterfaces().get(0).getInterfaceName(); //Simplest way of choosing an interface.
+
+		token = null;
+		if (result.getAuthorizationTokens() != null) {
+			token = result.getAuthorizationTokens().get(interfaceName); //Can be null when the security type of the provider is 'CERTIFICATE' or nothing.
+		}
+		final Object payload2 = null; //Can be null if not specified in the description of the service.
+
+		System.out.println("POST " + address2 + "/" + serviceUri);
+		final String consumedWriteService = arrowheadService.consumeServiceHTTP(String.class, httpMethod2, address2, port2, serviceUri2, interfaceName2, token, payload2, "opcuaServerAddress", meta2.get("serverAddress"), "opcuaNamespace", meta2.get("namespace"), "opcuaNodeId", meta2.get("nodeId"), "value", "123");
+		System.out.println("Service response: " + consumedWriteService);
+	}
+
+	public OrchestrationResultDTO orchestrate(String serviceDefinition) {
+		final Builder orchestrationFormBuilder = arrowheadService.getOrchestrationFormBuilder();
+
+		final ServiceQueryFormDTO requestedService = new ServiceQueryFormDTO();
+		requestedService.setServiceDefinitionRequirement(serviceDefinition);
+
+		orchestrationFormBuilder.requestedService(requestedService)
+				.flag(Flag.MATCHMAKING, false) //When this flag is false or not specified, then the orchestration response cloud contain more proper provider. Otherwise only one will be chosen if there is any proper.
+				.flag(Flag.OVERRIDE_STORE, true) //When this flag is false or not specified, then a Store Orchestration will be proceeded. Otherwise a Dynamic Orchestration will be proceeded.
+				.flag(Flag.TRIGGER_INTER_CLOUD, false); //When this flag is false or not specified, then orchestration will not look for providers in the neighbor clouds, when there is no proper provider in the local cloud. Otherwise it will.
+
+		final OrchestrationFormRequestDTO orchestrationRequest = orchestrationFormBuilder.build();
+
+		OrchestrationResponseDTO response = null;
+		try {
+			response = arrowheadService.proceedOrchestration(orchestrationRequest);
+		} catch(final ArrowheadException ex) {
+			//Handle the unsuccessful request as you wish!
+		}
+
+		if(response ==null||response.getResponse().isEmpty()) {
+			//If no proper providers found during the orchestration process, then the response list will be empty. Handle the case as you wish!
+			System.out.println("FATAL ERROR: Orchestration response came back empty. Make sure the Service you try to consume is in the Service Registry and that the Consumer has the privileges to consume this Service (e.g. check intra_cloud_authorization and intra_cloud_interface_connection).");
+			System.exit(1);
+		}
+
+		final OrchestrationResultDTO result = response.getResponse().get(0); //Simplest way of choosing a provider.
+		return result;
 	}
 }

@@ -28,7 +28,6 @@ public class ProviderController {
 	@ResponseBody
 	public String readVariableNode(@RequestParam(name = "opcuaServerAddress") final String opcuaServerAddress, @RequestParam(name = "opcuaNamespace") final int namespaceIndex, @RequestParam(name = "opcuaNodeId") final String identifier) {
 		System.out.println("Got a read variable request:" + opcuaServerAddress + "/" + namespaceIndex + "/" + identifier);
-		//NodeId nodeId = new NodeId(Integer.parseInt(namespaceIndex), Integer.parseInt(identifier));
 		NodeId nodeId = new NodeId(namespaceIndex, identifier);
 
 		OPCUAConnection connection = new OPCUAConnection(opcuaServerAddress);
@@ -40,6 +39,24 @@ public class ProviderController {
 		} catch (Exception ex) {
 			connection.dispose();
 			return "There was an error reading the OPC-UA node.";
+		}
+	}
+
+	@RequestMapping(path = "/opcua/write/variable")
+	@ResponseBody
+	public String readVariableNode(@RequestParam(name = "opcuaServerAddress") final String opcuaServerAddress, @RequestParam(name = "opcuaNamespace") final int namespaceIndex, @RequestParam(name = "opcuaNodeId") final String identifier, @RequestParam(name = "value") final String value) {
+		System.out.println("Got a write variable request:" + opcuaServerAddress + "/" + namespaceIndex + "/" + identifier + " value: " + value);
+		NodeId nodeId = new NodeId(namespaceIndex, identifier);
+
+		OPCUAConnection connection = new OPCUAConnection(opcuaServerAddress);
+		String body = "Wrote value: " + value;
+		try {
+			body = OPCUAInteractions.writeNode(connection.getConnectedClient(), nodeId, value, "double");
+			connection.dispose();
+			return body;
+		} catch (Exception ex) {
+			connection.dispose();
+			return "There was an error writing to the OPC-UA node.";
 		}
 	}
 
