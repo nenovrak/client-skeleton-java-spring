@@ -64,6 +64,13 @@ public class ProviderApplicationInitListener extends ApplicationInitListener {
 	@Value("${opc.ua.connection_address}")
 	private String opcuaServerAddress;
 
+	@Value("${opc.ua.root_node_namespace}")
+	private int rootNodeNamespaceIndex;
+
+	@Value("${opc.ua.root_node_identifier}")
+	private String rootNodeIdentifier;
+
+
 	private final Logger logger = LogManager.getLogger(ProviderApplicationInitListener.class);
 	
 	//=================================================================================================
@@ -87,27 +94,9 @@ public class ProviderApplicationInitListener extends ApplicationInitListener {
 		//TODO: implement here any custom behavior on application start up
 		//Register services into ServiceRegistry
 
-		// OPC-UA Variable read
-		// FIXME This should be read from a file...
-
-		// FIXME The opcServerAddress should NOT include opc.tcp:// since Eclipse Milo will add these
+		// "opc.tcp://" must be stripped off as Eclipse Milo will add this to the address regardless of whether it is there already
 		opcuaServerAddress = opcuaServerAddress.replaceAll("opc.tcp://", "");
-
-		// Variable list:
-		// #rootNodeId, read (Adds read services to SR for all variables including and below this node)
-		// #rootNodeId, write (Adds write services to SR for all variables including and below this node)
-
-		//String opcServerAddress = "A9824.neteq.ltu.se:53530/OPCUA/SimulationServer";
-		//int rootNodeNamespaceIndex = 5;
-		//String rootNodeIdentifier = "85/0:Simulation";
-		//String readVariableUri = "/opcua/read/variable/";
-
 		System.out.println("SERVER_ADDRESS:" + opcuaServerAddress);
-
-		int rootNodeNamespaceIndex = 5;
-		String rootNodeIdentifier = "85/0:Simulation";
-		String readVariableUri = "/opcua/read/variable/";
-
 
 		try {
 			NodeId nodeId = new NodeId(rootNodeNamespaceIndex, rootNodeIdentifier);
@@ -121,14 +110,23 @@ public class ProviderApplicationInitListener extends ApplicationInitListener {
 				String identifierPart[] = parts[1].split("=");
 				String identifier = identifierPart[1];
 
-				//ServiceRegistryRequestDTO serviceRequest = createServiceRegistryRequest("" + identifier,  "/opcua/read/variable?opcuaServerAddress=" + opcServerAddress + "&opcuaNamespace=" + rootNodeNamespaceIndex + "&opcuaNodeId=" + identifier , HttpMethod.GET);
-				ServiceRegistryRequestDTO serviceRequest = createServiceRegistryRequest("" + identifier,  "/opcua/read/variable", HttpMethod.GET);
+				// Register read services
+				ServiceRegistryRequestDTO serviceRequest = createServiceRegistryRequest("read_" + identifier,  "/opcua/read/variable", HttpMethod.GET);
 				serviceRequest.getMetadata().put("nodeId", identifier);
 				serviceRequest.getMetadata().put("serverAddress", opcuaServerAddress);
 				serviceRequest.getMetadata().put("namespace", "" + rootNodeNamespaceIndex);
 
 				arrowheadService.forceRegisterServiceToServiceRegistry(serviceRequest);
-				System.out.println("Registered service for variable " + nodeString + ".");
+				System.out.println("Registered read service for variable " + nodeString + ".");
+
+				// Register write services
+				serviceRequest = createServiceRegistryRequest("write_" + identifier,  "/opcua/write/variable", HttpMethod.POST);
+				serviceRequest.getMetadata().put("nodeId", identifier);
+				serviceRequest.getMetadata().put("serverAddress", opcuaServerAddress);
+				serviceRequest.getMetadata().put("namespace", "" + rootNodeNamespaceIndex);
+
+				arrowheadService.forceRegisterServiceToServiceRegistry(serviceRequest);
+				System.out.println("Registered write service for variable " + nodeString + ".");
 			}
 		} catch (Exception e) {
 			System.out.println("ERROR: Could not register to ServiceRegistry.");

@@ -46,7 +46,7 @@ public class ConsumerMain implements ApplicationRunner {
     	final Builder orchestrationFormBuilder = arrowheadService.getOrchestrationFormBuilder();
     	
     	final ServiceQueryFormDTO requestedService = new ServiceQueryFormDTO();
-    	requestedService.setServiceDefinitionRequirement("square1");
+    	requestedService.setServiceDefinitionRequirement("read_square1");
     	
     	orchestrationFormBuilder.requestedService(requestedService)
     							.flag(Flag.MATCHMAKING, false) //When this flag is false or not specified, then the orchestration response cloud contain more proper provider. Otherwise only one will be chosen if there is any proper.
@@ -66,7 +66,7 @@ public class ConsumerMain implements ApplicationRunner {
     	
     	if (response == null || response.getResponse().isEmpty()) {
     		//If no proper providers found during the orchestration process, then the response list will be empty. Handle the case as you wish!
-			System.out.println("FATAL ERROR: Orchestration response came back empty. Make sure the Service you try to consume is in the Service Registry and that the Consumer has the privileges to consume this Service (i.e. check intra_cloud_authorization).");
+			System.out.println("FATAL ERROR: Orchestration response came back empty. Make sure the Service you try to consume is in the Service Registry and that the Consumer has the privileges to consume this Service (e.g. check intra_cloud_authorization and intra_cloud_interface_connection).");
 			System.exit(1);
     	}
     	
