@@ -47,7 +47,7 @@ public class OPCUAInteractions {
     }
 
 
-    public static String readVariableNode(OpcUaClient client, NodeId nodeId) {
+    public static String readNode(OpcUaClient client, NodeId nodeId) {
         String returnString = "";
         try {
             VariableNode node = client.getAddressSpace().createVariableNode(nodeId);

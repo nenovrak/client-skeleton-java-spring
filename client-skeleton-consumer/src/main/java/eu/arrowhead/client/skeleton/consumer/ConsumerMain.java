@@ -79,7 +79,7 @@ public class ConsumerMain implements ApplicationRunner {
 		}
 		final Object payload2 = null; //Can be null if not specified in the description of the service.
 
-		System.out.println("POST " + address2 + "/" + serviceUri);
+		System.out.println("POST " + address2 + "/" + serviceUri2);
 		final String consumedWriteService = arrowheadService.consumeServiceHTTP(String.class, httpMethod2, address2, port2, serviceUri2, interfaceName2, token, payload2, "opcuaServerAddress", meta2.get("serverAddress"), "opcuaNamespace", meta2.get("namespace"), "opcuaNodeId", meta2.get("nodeId"), "value", "123");
 		System.out.println("Service response: " + consumedWriteService);
 	}

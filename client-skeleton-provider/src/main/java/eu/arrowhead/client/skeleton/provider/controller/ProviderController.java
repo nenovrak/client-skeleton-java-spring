@@ -33,7 +33,7 @@ public class ProviderController {
 		OPCUAConnection connection = new OPCUAConnection(opcuaServerAddress);
 		String body = "";
 		try {
-			body = OPCUAInteractions.readVariableNode(connection.getConnectedClient(), nodeId);
+			body = OPCUAInteractions.readNode(connection.getConnectedClient(), nodeId);
 			connection.dispose();
 			return body;
 		} catch (Exception ex) {
