@@ -8,11 +8,9 @@ import org.eclipse.milo.opcua.sdk.client.api.nodes.Node;
 import org.eclipse.milo.opcua.sdk.client.api.nodes.VariableNode;
 import org.eclipse.milo.opcua.stack.core.Identifiers;
 import org.eclipse.milo.opcua.stack.core.types.builtin.*;
+import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UInteger;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.*;
-import org.eclipse.milo.opcua.stack.core.types.structured.BrowseDescription;
-import org.eclipse.milo.opcua.stack.core.types.structured.BrowsePath;
-import org.eclipse.milo.opcua.stack.core.types.structured.BrowseResult;
-import org.eclipse.milo.opcua.stack.core.types.structured.ReferenceDescription;
+import org.eclipse.milo.opcua.stack.core.types.structured.*;
 
 import javax.xml.crypto.Data;
 import java.util.List;
@@ -63,22 +61,43 @@ public class OPCUAInteractions {
         return returnString;
     }
 
-    public static String writeNode(OpcUaClient client, NodeId nodeId, String value, String type) {
-        Object val = new Object();
-        if(type == "int") {
-            val = Integer.valueOf(value);
-        } else if(type == "double") {
-            val = Double.valueOf(value);
-        }
 
+    public static CompletableFuture<StatusCode> writeNode2(
+            final OpcUaClient client,
+            final NodeId nodeId,
+            final Object value) {
+
+        return client.writeValue(nodeId, new DataValue(new Variant(value)));
+    }
+
+    public static String writeNode(OpcUaClient client, NodeId nodeId, String value) {
+
+        // FIXME There should be a way to programmatically get the type from Eclipse Milo and write the variable directly using that type. As far as I can see, however, Milo only supports writing Variants which requires the conversion of a value into an object before it can be written.
         String returnString = "";
         returnString += value;
         try {
             VariableNode node = client.getAddressSpace().createVariableNode(nodeId);
-            Variant v = new Variant(val);
-            DataValue data = new DataValue(v,StatusCode.GOOD, null);
-            CompletableFuture<StatusCode> f = client.writeValue(nodeId, data);
-            StatusCode status = f.get();
+            Object val = new Object();
+            Object identifier = node.getDataType().get().getIdentifier();
+            UInteger id = UInteger.valueOf(0);
+
+            if(identifier instanceof UInteger) {
+                id = (UInteger) identifier;
+            }
+
+            System.out.println("getIdentifier: " + node.getDataType().get().getIdentifier());
+            switch (id.intValue()) {
+                // See Identifiers class in package org.eclipse.milo.opcua.stack.core; for more information
+                case 11: // Double
+                    val = Double.valueOf(value);
+                    break;
+                case 6: //Int32
+                    val = Integer.valueOf(value);
+                    break;
+            }
+
+            DataValue data = new DataValue(new Variant(val),StatusCode.GOOD, null);
+            StatusCode status = client.writeValue(nodeId, data).get();
             System.out.println("Wrote DataValue: " + data + " status: " + status);
             returnString = status.toString();
         } catch (Exception e) {

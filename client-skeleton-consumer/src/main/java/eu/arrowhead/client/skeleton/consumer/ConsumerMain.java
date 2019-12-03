@@ -44,7 +44,7 @@ public class ConsumerMain implements ApplicationRunner {
 		//SIMPLE EXAMPLE OF INITIATING AN ORCHESTRATION
 
 		// --------------------- Read OPC-UA Variable ---------------------------
-		OrchestrationResultDTO result = orchestrate("read_square1");
+		OrchestrationResultDTO result = orchestrate("read_counter1");
 		Map<String, String> meta = result.getMetadata();
 
 		final HttpMethod httpMethod = HttpMethod.GET;//Http method should be specified in the description of the service.
@@ -64,9 +64,10 @@ public class ConsumerMain implements ApplicationRunner {
 
 
 		// --------------------- Write OPC-UA Variable ---------------------------
-		result = orchestrate("write_square1");
+		//result = orchestrate("write_square1");
+        result = orchestrate("write_counter1");
 		Map<String, String> meta2 = result.getMetadata();
-		// FIXME Why are the variables above and here declared final? Thread safety? Performance? I've kept them final here but it is a bit silly to rename them in this way. It is, however, better than breaking things.
+		// FIXME Why are the variables above (and therefore here) declared final? Thread safety? Performance? I've kept them final here (i.e. created new varibles instead of re-using the above), but I'd rather re-use the above variables if possible?
 		final HttpMethod httpMethod2 = HttpMethod.POST;
 		final String address2 = result.getProvider().getAddress();
 		final int port2 = result.getProvider().getPort();
@@ -80,7 +81,8 @@ public class ConsumerMain implements ApplicationRunner {
 		final Object payload2 = null; //Can be null if not specified in the description of the service.
 
 		System.out.println("POST " + address2 + "/" + serviceUri2);
-		final String consumedWriteService = arrowheadService.consumeServiceHTTP(String.class, httpMethod2, address2, port2, serviceUri2, interfaceName2, token, payload2, "opcuaServerAddress", meta2.get("serverAddress"), "opcuaNamespace", meta2.get("namespace"), "opcuaNodeId", meta2.get("nodeId"), "value", "123");
+		String valueAsString = "123";
+		final String consumedWriteService = arrowheadService.consumeServiceHTTP(String.class, httpMethod2, address2, port2, serviceUri2, interfaceName2, token, payload2, "opcuaServerAddress", meta2.get("serverAddress"), "opcuaNamespace", meta2.get("namespace"), "opcuaNodeId", meta2.get("nodeId"), "value", valueAsString);
 		System.out.println("Service response: " + consumedWriteService);
 	}
 

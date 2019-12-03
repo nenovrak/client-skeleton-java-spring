@@ -1,7 +1,10 @@
 package eu.arrowhead.client.skeleton.provider.controller;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
+import org.eclipse.milo.opcua.stack.core.types.builtin.StatusCode;
 import org.springframework.web.bind.annotation.*;
 import eu.arrowhead.client.skeleton.provider.OPC_UA.*;
+
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 public class ProviderController {
@@ -51,7 +54,9 @@ public class ProviderController {
 		OPCUAConnection connection = new OPCUAConnection(opcuaServerAddress);
 		String body = "Wrote value: " + value;
 		try {
-			body = OPCUAInteractions.writeNode(connection.getConnectedClient(), nodeId, value, "double");
+			String status = OPCUAInteractions.writeNode(connection.getConnectedClient(), nodeId, value);
+			//StatusCode status2 = OPCUAInteractions.writeNode2(connection.getConnectedClient(), nodeId, value).get();
+			System.out.println("Status Code: " + status);
 			connection.dispose();
 			return body;
 		} catch (Exception ex) {
