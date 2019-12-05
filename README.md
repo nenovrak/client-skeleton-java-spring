@@ -1,5 +1,5 @@
 ![GitHub Logo](documentation/Arrowhead_OPC-UA-Provider.png)
-**Figure 1. The general concept of how this repository can help you integrate an OPC-UA Server (and its nodes) using this repository. The green lines show how an OPC-UA Provider (included in this repository) added to an Arrowhead Local cloud can be used to connect to an OPC-UA Server and read/write Variable Nodes.**
+**Figure 1. The image represents the general concept of how this repository can help you integrate an OPC-UA Server to an Arrowhead Local cloud. The green lines show how the OPC-UA Provider included in this repository can be used to connect to equipment and sensors controlled by an OPC-UA server.**
 
 (Icons made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
 )
