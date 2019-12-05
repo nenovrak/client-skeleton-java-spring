@@ -1,6 +1,9 @@
 ![GitHub Logo](documentation/Arrowhead_OPC-UA-Provider.png)
 **Figure 1. The general concept of how this repository can help you integrate an OPC-UA Server (and its nodes) using this repository. The green lines show how an OPC-UA Provider (included in this repository) added to an Arrowhead Local cloud can be used to connect to an OPC-UA Server and read/write Variable Nodes.**
 
+(Icons made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+)
+
 # Arrowhead_OPC-UA
 This project provides the possibility to integrate an existing OPC-UA Server with Consumers in an [Arrowhead Framework](http://github.com/arrowhead-f) local cloud. It is based on the [Eclipse Milo (tm)](https://github.com/eclipse/milo) OPC-UA stack and the [Client Skeletons](https://github.com/arrowhead-f/client-skeleton-java-spring) for the [Arrowhead Framework 4.1.3](https://github.com/arrowhead-f/core-java-spring).
 
